@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Peta Koordinat Jawa Barat</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>#mapid { height: 600px; }</style>
+</head>
+<body>
+  <h2>Peta Titik di Tasikmalaya, Subang, dan Sumedang</h2>
+  <div id="mapid"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('mapid').setView([-7.0, 108.0], 9);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    function generatePoints(lat, lng, count, radius = 0.05) {
+      let points = [];
+      for (let i = 0; i < count; i++) {
+        const dLat = (Math.random() - 0.5) * radius;
+        const dLng = (Math.random() - 0.5) * radius;
+        points.push([lat + dLat, lng + dLng]);
+      }
+      return points;
+    }
+
+    // Titik tengah kota
+    const cities = [
+      { name: "Tasikmalaya", lat: -7.3276, lng: 108.2207, count: 10, color: "blue" },
+      { name: "Subang",       lat: -6.5713, lng: 107.7608, count: 20, color: "green" },
+      { name: "Sumedang",     lat: -6.8504, lng: 107.9160, count: 30, color: "red" }
+    ];
+
+    cities.forEach(city => {
+      // Tambahkan lingkaran area
+      L.circle([city.lat, city.lng], {
+        radius: 3000, // meter
+        color: city.color,
+        fillColor: city.color,
+        fillOpacity: 0.2
+      }).addTo(map).bindPopup(`${city.name} (${city.count} titik)`);
+
+      // Tambahkan titik-titik acak
+      const points = generatePoints(city.lat, city.lng, city.count);
+      points.forEach(p => {
+        L.circleMarker(p, {
+          radius: 4,
+          color: city.color,
+          fillOpacity: 0.8
+        }).addTo(map);
+      });
+    });
+  </script>
+</body>
+</html>

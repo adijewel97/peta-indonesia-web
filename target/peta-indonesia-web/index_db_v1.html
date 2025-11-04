@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Jaringan Listrik Map & JSON</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map { height: 400px; margin-bottom: 20px; }
+        .label {
+            font-weight: bold;
+            background: white;
+            padding: 2px 4px;
+            border-radius: 3px;
+            border: 1px solid gray;
+        }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 5px; text-align: left; }
+        th { background-color: #f4f4f4; }
+    </style>
+</head>
+<body>
+
+<h2>Jaringan Listrik Map & Data JSON</h2>
+<div id="map"></div>
+
+<h3>Data JSON Jaringan Listrik</h3>
+<table id="dataTable">
+    <thead>
+        <tr>
+            <th>Kode</th>
+            <th>Tipe</th>
+            <th>Kapasitas</th>
+            <th>Latitude</th>
+            <th>Longitude</th>
+            <th>Jumlah Cabang</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+    var map = L.map('map').setView([-6.2, 106.8], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    var tbody = document.querySelector('#dataTable tbody');
+    var colors = ['blue', 'green', 'red', 'orange', 'purple'];
+
+    fetch('/api/jaringan')
+        .then(response => response.json())
+        .then(data => {
+            console.log("Data jaringan:", data);
+            var mapMarkers = {};
+
+            data.forEach(row => {
+                var marker = L.marker([row.lat, row.lon]).addTo(map)
+                    .bindTooltip(row.kode, {permanent: true, direction: 'right', className: 'label'})
+                    .bindPopup(
+                        `<b>Kode:</b> ${row.kode}<br>` +
+                        `<b>Tipe:</b> ${row.tipe}<br>` +
+                        `<b>Kapasitas:</b> ${row.kapasitas}`
+                    );
+
+                mapMarkers[row.id] = marker;
+
+                if (row.parent_id && mapMarkers[row.parent_id]) {
+                    L.polyline([
+                        [mapMarkers[row.parent_id].getLatLng().lat, mapMarkers[row.parent_id].getLatLng().lng],
+                        [row.lat, row.lon]
+                    ], {color: colors[row.level % colors.length], weight: 3}).addTo(map);
+                }
+
+                var tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.kode}</td>
+                    <td>${row.tipe}</td>
+                    <td>${row.kapasitas}</td>
+                    <td>${row.lat}</td>
+                    <td>${row.lon}</td>
+                    <td>${row.parent_id || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(err => console.error('Error memuat data jaringan:', err));
+</script>
+
+</body>
+</html>

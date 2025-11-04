@@ -1,0 +1,178 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Peta Jaringan Listrik</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <style>
+        body { font-family: Arial, sans-serif; margin: 10px; background: #f7f7f7; }
+        #map { height: 500px; border-radius: 10px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        th, td { border: 1px solid #ddd; padding: 8px; font-size: 13px; }
+        th { background-color: #007bff; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+<h2>📡 Peta Jaringan Listrik</h2>
+<div id="map"></div>
+
+<h3>📋 Data Jaringan</h3>
+<table id="dataTable">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Kode System</th>
+            <th>Tipe</th>
+            <th>Kapasitas</th>
+            <th>Latitude</th>
+            <th>Longitude</th>
+            <th>Parent ID</th>
+            <th>Status Lapangan</th>
+            <th>Status Kontrak</th>
+            <th>Transmisi</th>
+            <th>Panjang (m)</th>
+            <th>Rupiah/Satuan</th>
+            <th>Unit UPI</th>
+            <th>Unit AP</th>
+            <th>Unit UP</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    var map = L.map('map').setView([-6.2, 106.816], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19, attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    var tbody = document.querySelector('#dataTable tbody');
+
+    // === Ikon Gardu, Tiang, Pelanggan ===
+    var icons = {
+        gardu_baru: L.icon({ iconUrl: 'assets/icons/TrafoListrik_new64.png', iconSize: [32, 32], iconAnchor: [16, 32] }),
+        gardu_lama: L.icon({ iconUrl: 'assets/icons/TrafoListrik_old64.png', iconSize: [32, 32], iconAnchor: [16, 32] }),
+        tiang_baru: L.icon({ iconUrl: 'assets/icons/TiangListrik_new64.png', iconSize: [32, 32], iconAnchor: [16, 32] }),
+        tiang_lama: L.icon({ iconUrl: 'assets/icons/TiangListrik_old64.png', iconSize: [32, 32], iconAnchor: [16, 32] }),
+        pelanggan_baru: L.icon({ iconUrl: 'assets/icons/PelangganListrik_new64.png', iconSize: [32, 32], iconAnchor: [16, 32] }),
+        pelanggan_lama: L.icon({ iconUrl: 'assets/icons/PelangganListrik_old64.png', iconSize: [32, 32], iconAnchor: [16, 32] })
+    };
+
+    // === Gaya garis berdasarkan transmisi/status ===
+    function getCableStyle(row) {
+        const transmisi = (row.transmisi || '').toUpperCase();
+        const status = (row.status_lapangan || 'LAMA').toUpperCase();
+
+        let color, weight, dashArray;
+        if (transmisi === 'TT') { color = '#ff6600'; weight = 6; }     // Tegangan Tinggi
+        else if (transmisi === 'TM') { color = '#00bfff'; weight = 4; } // Tegangan Menengah
+        else { color = '#32cd32'; weight = 2; }                         // Tegangan Rendah
+
+        if (status === 'LAMA') { color = '#808080'; dashArray = '5,5'; }
+        else if (status === 'GANTI') { color = '#ba55d3'; dashArray = '4,6'; }
+        else { dashArray = null; }
+
+        return { color, weight, dashArray, opacity: 0.9 };
+    }
+
+    // === Ambil data dari API ===
+    fetch('api/jaringan')
+        .then(res => res.json())
+        .then(rawData => {
+            const data = Array.isArray(rawData) ? rawData : [rawData];
+            console.log("✅ Data jaringan:", data);
+
+            const mapMarkers = {};
+            const bounds = [];
+
+            // --- Tahap 1: Gambar node ---
+            data.forEach(row => {
+                const lat = parseFloat(row.lat);
+                const lng = parseFloat(row.lng);
+                if (!lat || !lng) return;
+
+                const tipe = (row.tipe || '').toUpperCase();
+                const status = (row.status_lapangan || 'LAMA').toUpperCase();
+
+                let iconKey = '';
+                if (tipe === 'GARDU') iconKey = status === 'BARU' ? 'gardu_baru' : 'gardu_lama';
+                else if (tipe === 'TIANG') iconKey = status === 'BARU' ? 'tiang_baru' : 'tiang_lama';
+                else if (tipe === 'PELANGGAN') iconKey = status === 'BARU' ? 'pelanggan_baru' : 'pelanggan_lama';
+
+                if (iconKey) {
+                    const marker = L.marker([lat, lng], { icon: icons[iconKey] })
+                        .bindTooltip(row.kode_system, { permanent: true, direction: 'right' })
+                        .bindPopup(
+                            '<b>Kode:</b> ' + row.kode_system + '<br>' +
+                            '<b>Tipe:</b> ' + row.tipe + '<br>' +
+                            '<b>Kapasitas:</b> ' + (row.kapasitas || '-') + '<br>' +
+                            '<b>Status Lapangan:</b> ' + (row.status_lapangan || '-') + '<br>' +
+                            '<b>Status Kontrak:</b> ' + (row.status_kontrak || '-') + '<br>' +
+                            '<b>Transmisi:</b> ' + (row.transmisi || '-')
+                        )
+                        .addTo(map);
+
+                    mapMarkers[row.id] = marker;
+                    bounds.push([lat, lng]);
+                }
+            });
+
+            // --- Tahap 2: Gambar kabel antar node ---
+            data.forEach(row => {
+                if (row.tipe === 'KABEL' && row.parent_id && row.target_id) {
+                    const parent = data.find(d => d.id === row.parent_id);
+                    const target = data.find(d => d.id === row.target_id);
+                    if (parent && target) {
+                        const style = getCableStyle(row);
+                        const line = L.polyline(
+                            [[parent.lat, parent.lng], [target.lat, target.lng]],
+                            style
+                        ).addTo(map);
+                        line.bindPopup(
+                                '<b>Kabel:</b> ' + row.kode_system + '<br>' +
+                                '<b>Dari:</b> ' + parent.kode_system + '<br>' +
+                                '<b>Ke:</b> ' + target.kode_system + '<br>' +
+                                '<b>Panjang:</b> ' + (row.panjang_m || '-') + ' m<br>' +
+                                '<b>Status:</b> ' + (row.status_lapangan || '-')
+                            );
+                    }
+                }
+            });
+
+            // --- Tahap 3: Isi tabel data ---
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML =
+                    "<td>" + (row.id || '-') + "</td>" +
+                    "<td>" + (row.kode_system || '-') + "</td>" +
+                    "<td>" + (row.tipe || '-') + "</td>" +
+                    "<td>" + (row.kapasitas || '-') + "</td>" +
+                    "<td>" + (row.lat || '-') + "</td>" +
+                    "<td>" + (row.lng || '-') + "</td>" +
+                    "<td>" + (row.parent_id || '-') + "</td>" +
+                    "<td>" + (row.status_lapangan || '-') + "</td>" +
+                    "<td>" + (row.status_kontrak || '-') + "</td>" +
+                    "<td>" + (row.transmisi || '-') + "</td>" +
+                    "<td>" + (row.panjang_m || '-') + "</td>" +
+                    "<td>" + (row.rupiah_satuan || '-') + "</td>" +
+                    "<td>" + (row.unitupi || '-') + "</td>" +
+                    "<td>" + (row.unitap || '-') + "</td>" +
+                    "<td>" + (row.unitup || '-') + "</td>";
+                tbody.appendChild(tr);
+            });
+
+            // --- Fit map ---
+            if (bounds.length > 0) map.fitBounds(bounds, { padding: [40, 40] });
+        })
+        .catch(err => console.error("❌ Gagal memuat data jaringan:", err));
+});
+</script>
+</body>
+</html>

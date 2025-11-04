@@ -1,0 +1,47 @@
+[
+    {
+        "id": 1,
+        "kode": "G1",
+        "tipe": "Gardu",
+        "kapasitas": "1000 kVA",
+        "lat": -6.2,
+        "lon": 106.8,
+        "parent_id": null
+    },
+    {
+        "id": 2,
+        "kode": "T",
+        "tipe": "Tiang",
+        "kapasitas": "50 kVA",
+        "lat": -6.202,
+        "lon": 106.802,
+        "parent_id": 1
+    },
+    {
+        "id": 3,
+        "kode": "T",
+        "tipe": "Tiang",
+        "kapasitas": "25 kVA",
+        "lat": -6.203,
+        "lon": 106.804,
+        "parent_id": 2
+    },
+    {
+        "id": 4,
+        "kode": "T",
+        "tipe": "Tiang",
+        "kapasitas": "25 kVA",
+        "lat": -6.201,
+        "lon": 106.806,
+        "parent_id": 2
+    },
+    {
+        "id": 5,
+        "kode": "T",
+        "tipe": "Tiang",
+        "kapasitas": "50 kVA",
+        "lat": -6.198,
+        "lon": 106.805,
+        "parent_id": 1
+    }
+]

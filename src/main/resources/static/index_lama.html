@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Peta Manual Indonesia</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>#map { height: 600px; }</style>
+</head>
+<body>
+
+<h3>Peta Interaktif Manual Indonesia</h3>
+<div id="map"></div>
+<p id="info"></p>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+    var map = L.map('map').setView([-2.5, 117], 5);
+    L.tileLayer('', { attribution: '' }).addTo(map);
+
+    map.on('click', function(e) {
+        var lat = e.latlng.lat;
+        var lon = e.latlng.lng;
+        fetch(`/peta-indonesia-web/api/maps/info?lat=` + lat + "&lon=" + lon)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("info").innerHTML = `<b>Provinsi:</b> ${data.kota}<br><b>Info:</b> ${data.info}`;
+                L.circle([lat, lon], {
+                    color: data.warna,
+                    fillColor: data.warna,
+                    fillOpacity: 0.5,
+                    radius: 50000
+                }).addTo(map);
+            });
+    });
+</script>
+
+</body>
+</html>

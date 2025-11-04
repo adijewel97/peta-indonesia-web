@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Analisis Pelanggan & Jalur Listrik</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>#mapid { height: 600px; }</style>
+</head>
+<body>
+  <h2>Peta Analisis Pelanggan Listrik Jawa Barat</h2>
+  <div id="mapid"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('mapid').setView([-7.0, 108.0], 9);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    function generatePointsNearLine(baseLat, baseLng, count, offset = 0.015) {
+      let points = [];
+      for (let i = 0; i < count; i++) {
+        const shift = i * 0.002 + 0.001;
+        let lat = baseLat + (Math.random() - 0.5) * offset;
+        let lng = baseLng + shift;
+        points.push([lat, lng]);
+      }
+      return points;
+    }
+
+    function getPriorityColor(distance) {
+      if (distance < 0.005) return 'green';    // Prioritas 1
+      if (distance < 0.01) return 'yellow';    // Prioritas 2
+      return 'red';                            // Prioritas 3
+    }
+
+    const cities = [
+      { name: "Tasikmalaya", lat: -7.3276, lng: 108.2207, count: 10, color: "blue" },
+      { name: "Subang",      lat: -6.5713, lng: 107.7608, count: 20, color: "purple" },
+      { name: "Sumedang",    lat: -6.8504, lng: 107.9160, count: 30, color: "orange" }
+    ];
+
+    cities.forEach(city => {
+      // Gerapak polygon (kotak wilayah kota)
+      const delta = 0.02;
+      const polygon = [
+        [city.lat - delta, city.lng - delta],
+        [city.lat - delta, city.lng + delta],
+        [city.lat + delta, city.lng + delta],
+        [city.lat + delta, city.lng - delta]
+      ];
+      L.polygon(polygon, {
+        color: city.color,
+        weight: 2,
+        dashArray: "5, 5",
+        fillOpacity: 0.05
+      }).addTo(map).bindPopup(`Gerapak ${city.name}`);
+
+      // Lingkaran coverage kota
+      L.circle([city.lat, city.lng], {
+        radius: 3000,
+        color: city.color,
+        fillColor: city.color,
+        fillOpacity: 0.1
+      }).addTo(map).bindPopup(`${city.name} (${city.count} pelanggan)`);
+
+      // Jalur listrik utama
+      const jalurListrik = [
+        [city.lat, city.lng - 0.015],
+        [city.lat, city.lng + 0.05]
+      ];
+      L.polyline(jalurListrik, {
+        color: "orange",
+        weight: 3,
+        opacity: 0.9
+      }).addTo(map).bindPopup(`Jalur Listrik Utama ${city.name}`);
+
+      // Titik pelanggan
+      const pelanggan = generatePointsNearLine(city.lat, city.lng, city.count);
+
+      pelanggan.forEach((p, i) => {
+        const dist = Math.abs(p[0] - city.lat);
+        const prioColor = getPriorityColor(dist);
+
+        // Marker pelanggan
+        L.circleMarker(p, {
+          radius: 5,
+          color: prioColor,
+          fillColor: prioColor,
+          fillOpacity: 0.9
+        }).addTo(map).bindPopup(`${city.name} - Pelanggan ${i + 1}<br>Jarak: ${dist.toFixed(4)}<br><b>Prioritas: ${prioColor.toUpperCase()}</b>`);
+
+        // Sambungan ke jalur utama
+        const jalurSambung = [
+          [city.lat, p[1]],
+          p
+        ];
+        L.polyline(jalurSambung, {
+          color: prioColor,
+          weight: 1.5,
+          dashArray: "3, 5",
+          opacity: 0.6
+        }).addTo(map);
+      });
+    });
+
+    map.setView([-6.9, 108.0], 10);
+  </script>
+</body>
+</html>
