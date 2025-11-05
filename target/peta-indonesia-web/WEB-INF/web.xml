@@ -21,4 +21,25 @@
         <url-pattern>/api/jaringan</url-pattern>
     </servlet-mapping>
 
+    <!-- <servlet>
+        <servlet-name>MapsAddTiangController</servlet-name>
+        <servlet-class>com.example.controller.MapsAddTiangController</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>MapsAddTiangController</servlet-name>
+        <url-pattern>/api/maps/addTiang</url-pattern>
+    </servlet-mapping> -->
+
+    <servlet>
+        <servlet-name>MapsTiangController</servlet-name>
+        <servlet-class>com.example.controller.MapsTiangController</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>MapsTiangController</servlet-name>
+        <url-pattern>/api/maps/tiang</url-pattern>
+    </servlet-mapping>
+
+
 </web-app>
