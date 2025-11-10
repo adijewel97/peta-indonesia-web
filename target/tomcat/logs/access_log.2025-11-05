@@ -1,9 +1,0 @@
-0:0:0:0:0:0:0:1 - - [05/Nov/2025:16:23:50 +0700] "GET / HTTP/1.1" 200 15368 http-bio-8080-exec-1 974
-0:0:0:0:0:0:0:1 - - [05/Nov/2025:16:23:51 +0700] "GET /assets/icons/TrafoListrik_new64.png HTTP/1.1" 200 1602 http-bio-8080-exec-2 10
-0:0:0:0:0:0:0:1 - - [05/Nov/2025:16:23:51 +0700] "GET /assets/icons/TiangListrik_new64.png HTTP/1.1" 200 583 http-bio-8080-exec-4 10
-0:0:0:0:0:0:0:1 - - [05/Nov/2025:16:23:51 +0700] "GET /assets/icons/PelangganListrik_new64.png HTTP/1.1" 200 2091 http-bio-8080-exec-5 5
-0:0:0:0:0:0:0:1 - - [05/Nov/2025:16:23:51 +0700] "GET /favicon.ico HTTP/1.1" 404 973 http-bio-8080-exec-8 0
-0:0:0:0:0:0:0:1 - - [05/Nov/2025:16:23:52 +0700] "GET /api/jaringan HTTP/1.1" 200 20874 http-bio-8080-exec-3 1650
-0:0:0:0:0:0:0:1 - - [05/Nov/2025:16:24:06 +0700] "POST /api/maps/tiang?act=add HTTP/1.1" 200 57 http-bio-8080-exec-10 130
-0:0:0:0:0:0:0:1 - - [05/Nov/2025:16:24:06 +0700] "GET /api/jaringan HTTP/1.1" 200 21359 http-bio-8080-exec-10 147
-0:0:0:0:0:0:0:1 - - [05/Nov/2025:16:24:13 +0700] "POST /api/maps/tiang?act=delete HTTP/1.1" 200 56 http-bio-8080-exec-10 124

@@ -9,8 +9,6 @@ com\example\service\MonRekonPerUpiService.class
 com\example\service\FtpService.class
 com\example\utils\FTPUtil.class
 com\example\maps\MapController.class
-com\example\controller\SimpanTiangController.class
 com\example\utils\LoggerUtil$1.class
-com\example\controller\MapsAddTiangController.class
 com\example\service\ReffGlobalService.class
 com\example\controller\MapsController.class

@@ -62,7 +62,8 @@ public class MapsTiangController extends HttpServlet {
             String user = "adis"; // nanti bisa diganti session
 
             // === Ambil Unit dan Wilayah ===
-            String sqlUnit = "SELECT a.UNITUPI, a.UNITAP, a.UNITUP, " +
+            String sqlUnit = 
+                    "SELECT a.UNITUPI, a.UNITAP, a.UNITUP, " +
                     "a.KD_PROV, B.NAMA_PROV PROVINSI, a.KD_KAB,  B.NAMA_KAB KABUPATENKOTA, " +
                     "a.KD_KEC,  B.NAMA_KEC KECAMATAN, a.KD_KEL, B.NAMA_KEL DESAKELURAHAN " +
                     "FROM LISDESBPBL.MASTER_ROLE_PETUGAS a, LISDESBPBL.MASTER_REFF_KELURAHAN b " +

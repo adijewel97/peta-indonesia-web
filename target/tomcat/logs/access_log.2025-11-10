@@ -1,0 +1,9 @@
+0:0:0:0:0:0:0:1 - - [10/Nov/2025:10:50:21 +0700] "GET /tailwind-webapp/ HTTP/1.1" 404 983 http-bio-8080-exec-1 30
+0:0:0:0:0:0:0:1 - - [10/Nov/2025:10:50:21 +0700] "GET /favicon.ico HTTP/1.1" 404 973 http-bio-8080-exec-3 2
+0:0:0:0:0:0:0:1 - - [10/Nov/2025:10:50:26 +0700] "GET / HTTP/1.1" 200 16328 http-bio-8080-exec-5 564
+0:0:0:0:0:0:0:1 - - [10/Nov/2025:10:50:27 +0700] "GET /assets/icons/TiangListrik_new64.png HTTP/1.1" 304 - http-bio-8080-exec-10 11
+0:0:0:0:0:0:0:1 - - [10/Nov/2025:10:50:27 +0700] "GET /assets/icons/TrafoListrik_old64.png HTTP/1.1" 304 - http-bio-8080-exec-7 18
+0:0:0:0:0:0:0:1 - - [10/Nov/2025:10:50:27 +0700] "GET /assets/icons/TiangListrik_old64.png HTTP/1.1" 304 - http-bio-8080-exec-8 16
+0:0:0:0:0:0:0:1 - - [10/Nov/2025:10:50:27 +0700] "GET /assets/icons/TrafoListrik_new64.png HTTP/1.1" 304 - http-bio-8080-exec-9 17
+0:0:0:0:0:0:0:1 - - [10/Nov/2025:10:50:27 +0700] "GET /assets/icons/PelangganListrik_new64.png HTTP/1.1" 304 - http-bio-8080-exec-10 2
+0:0:0:0:0:0:0:1 - - [10/Nov/2025:10:50:30 +0700] "GET /api/jaringan HTTP/1.1" 200 20460 http-bio-8080-exec-6 3068

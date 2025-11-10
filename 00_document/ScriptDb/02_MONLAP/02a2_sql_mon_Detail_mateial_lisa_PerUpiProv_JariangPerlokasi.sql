@@ -1,0 +1,16 @@
+select x.*, volume*HARGA_SATUAN as TOTAL_HARGA
+from
+(
+    select a.UNITUPI, a.UNITAP, a.UNITUP, a.KD_PROV, a.PROVINSI, a.KD_KAB, a.KABUPATENKOTA, a.KD_KEC, a.KECAMATAN, a.KD_KEL, a.DESAKELURAHAN,
+           a.NOMOR_KONTRAK_INDUK, a.NOMOR_KONTRAK_RINCI,
+           a.ID_MDU, a.KATEGORI, a.SPESIFIKASI,
+           count(*) volume, nvl(a.KDSATUAN, b.KDSATUAN) KDSATUAN,
+           max(b.HARGA) as HARGA_SATUAN
+    from LISDESBPBL.TRANS_JARINGAN_LISTRIK a, LISDESBPBL.MASTER_MATERIAL_UNIT b
+--    where a.NOMOR_KONTRAK_RINCI = 'B'
+--    and   a.KD_KEL = '3207112002'
+    where   a.unitup = b.unitup
+    and    a.id_mdu = b.id_mdu(+)
+    group by a.UNITUPI, a.UNITAP, a.UNITUP, a.KD_PROV, a.PROVINSI, a.KD_KAB, a.KABUPATENKOTA, a.KD_KEC, a.KECAMATAN, a.KD_KEL, a.DESAKELURAHAN,
+           a.NOMOR_KONTRAK_INDUK, a.NOMOR_KONTRAK_RINCI, a.ID_MDU, a.KATEGORI, a.SPESIFIKASI, nvl(a.KDSATUAN, b.KDSATUAN)
+) x

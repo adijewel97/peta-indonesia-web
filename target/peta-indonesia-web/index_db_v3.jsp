@@ -82,10 +82,18 @@ document.addEventListener('DOMContentLoaded', function() {
         pelanggan_lama: L.icon({ iconUrl: 'assets/icons/PelangganListrik_old64.png', iconSize: [28,28], iconAnchor: [14,28] })
     };
 
-    var newMarker = null;
-    var tambahTiangMode = false;
+    // ====== Fungsi offset kabel agar TM/TR tidak menumpuk ======
+    function offsetLine(lat1, lon1, lat2, lon2, offset){
+        var dx = lon2 - lon1;
+        var dy = lat2 - lat1;
+        var length = Math.sqrt(dx*dx + dy*dy);
+        if(length === 0) return [[lat1, lon1],[lat2, lon2]];
+        var ox = -dy/length * offset;
+        var oy = dx/length * offset;
+        return [[lat1+oy, lon1+ox],[lat2+oy, lon2+ox]];
+    }
 
-    // ====== Fungsi utama memuat data jaringan ======
+    // ====== Fungsi load jaringan ======
     function loadJaringan() {
         garduLayer.clearLayers();
         tiangLayer.clearLayers();
@@ -102,76 +110,42 @@ document.addEventListener('DOMContentLoaded', function() {
                     var kategori = (row.kategori || '').toUpperCase();
                     var status = (row.status_lapangan || 'LAMA').toUpperCase();
 
-                    // ====== Kabel (garis) ======
-                    if (kategori === 'KABEL') {
-                        var lat1 = parseFloat(row.lat_awal);
-                        var lon1 = parseFloat(row.lon_awal);
-                        var lat2 = parseFloat(row.lat_akhir);
-                        var lon2 = parseFloat(row.lon_akhir);
+                    if (kategori !== 'KABEL'){
+                        var lat = parseFloat(row.latitude);
+                        var lon = parseFloat(row.longitude);
+                        if (!lat || !lon) return;
 
-                        if (!lat1 || !lon1 || !lat2 || !lon2) return;
+                        var iconKey = '';
+                        if (kategori === 'GARDU') iconKey = status === 'BARU' ? 'gardu_baru' : 'gardu_lama';
+                        else if (kategori === 'TIANG') iconKey = status === 'BARU' ? 'tiang_baru' : 'tiang_lama';
+                        else if (kategori === 'PELANGGAN') iconKey = status === 'BARU' ? 'pelanggan_baru' : 'pelanggan_lama';
 
-                        var transmisi = (row.transmisi || '').toUpperCase();
-                        var color = '#808080'; // default abu-abu
+                        var icon = icons[iconKey];
+                        var popup = "<b>ID:</b> " + (row.id_jaringan || '-') +
+                                    "<br><b>Kode:</b> " + (row.kode_system || '-') +
+                                    "<br><b>Kategori:</b> " + (row.kategori || '-') +
+                                    "<br><b>Spesifikasi:</b> " + (row.spesifikasi || '-') +
+                                    "<br><b>Transmisi:</b> " + (row.transmisi || '-') +
+                                    "<br><b>Status Lapangan:</b> " + (row.status_lapangan || '-') +
+                                    "<br><b>Latitude:</b> " + (row.latitude || '-') +
+                                    "<br><b>Longitude:</b> " + (row.longitude || '-')+
+                                    "<br><b>Desa/Kelurahan:</b> " + (row.DESAKELURAHAN || '-');
 
-                        if (status === 'BARU') {
-                            if (transmisi === 'TT') color = '#ff6600'; // oranye
-                            else if (transmisi === 'TM') color = '#00bfff'; // biru muda
-                            else if (transmisi === 'TR') color = '#32cd32'; // hijau
-                        }
+                        var marker = L.marker([lat, lon], {icon: icon}).bindPopup(popup);
+                        bounds.push([lat, lon]);
 
-                        var polyline = L.polyline([[lat1, lon1], [lat2, lon2]], {
-                            color: color,
-                            weight: status === 'BARU' ? 4 : 2,
-                            opacity: status === 'BARU' ? 0.9 : 0.6,
-                            dashArray: (status === 'LAMA' ? '6, 6' : null)
-                        }).bindPopup(
-                            "<b>KABEL</b><br>" +
-                            "ID: " + (row.id_jaringan || '-') + "<br>" +
-                            "Transmisi: " + (row.transmisi || '-') + "<br>" +
-                            "Status: " + (row.status_lapangan || '-') + "<br>" +
-                            "Koordinat Awal: " + lat1 + ", " + lon1 + "<br>" +
-                            "Koordinat Akhir: " + lat2 + ", " + lon2
-                        );
+                        // ====== Marker Tiang ======
+                        if (kategori === 'TIANG'){
+                            marker.bindTooltip(
+                                (row.kode_system || '-') + " - " + (row.transmisi || '-'),
+                                { permanent:true, direction:'top', offset:[0,-30], className:'label-tiang' }
+                            );
 
-                        kabelLayer.addLayer(polyline);
-                        bounds.push([lat1, lon1]);
-                        bounds.push([lat2, lon2]);
-                        return;
-                    }
+                            // ====== Klik kanan hapus tiang ======
+                            marker.on('contextmenu', function(e) {
+                                if (!row.id_jaringan) { alert("❌ ID jaringan tidak ditemukan!"); return; }
+                                if(!confirm("⚠️ Apakah Anda yakin ingin menghapus Tiang " + (row.kode_system || '-') + "?")) return;
 
-                    // ====== Marker Gardu / Tiang / Pelanggan ======
-                    var lat = parseFloat(row.latitude);
-                    var lon = parseFloat(row.longitude);
-                    if (!lat || !lon) return;
-
-                    var iconKey = '';
-                    if (kategori === 'GARDU') iconKey = status === 'BARU' ? 'gardu_baru' : 'gardu_lama';
-                    else if (kategori === 'TIANG') iconKey = status === 'BARU' ? 'tiang_baru' : 'tiang_lama';
-                    else if (kategori === 'PELANGGAN') iconKey = status === 'BARU' ? 'pelanggan_baru' : 'pelanggan_lama';
-
-                    var icon = icons[iconKey];
-                    var popup = "<b>ID:</b> " + (row.id_jaringan || '-') +
-                                "<br><b>Kode:</b> " + (row.kode_system || '-') +
-                                "<br><b>Kategori:</b> " + (row.kategori || '-') +
-                                "<br><b>Spesifikasi:</b> " + (row.spesifikasi || '-') +
-                                "<br><b>Transmisi:</b> " + (row.transmisi || '-') +
-                                "<br><b>Status Lapangan:</b> " + (row.status_lapangan || '-') +
-                                "<br><b>Latitude:</b> " + (row.latitude || '-') +
-                                "<br><b>Longitude:</b> " + (row.longitude || '-');
-
-                    var marker = L.marker([lat, lon], {icon: icon}).bindPopup(popup);
-                    bounds.push([lat, lon]);
-
-                    // Klik kanan untuk hapus tiang
-                    if (kategori === 'TIANG') {
-                        marker.on('contextmenu', function(e){
-                            if (!row.id_jaringan) {
-                                alert("❌ ID jaringan tidak ditemukan!");
-                                return;
-                            }
-                            var confirmDelete = confirm("⚠️ Hapus tiang ini?\nID: " + row.id_jaringan);
-                            if (confirmDelete) {
                                 fetch('api/maps/tiang?act=delete', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -179,29 +153,62 @@ document.addEventListener('DOMContentLoaded', function() {
                                 })
                                 .then(r => r.json())
                                 .then(res => {
-                                    if (res.success) {
-                                        alert("✅ Tiang berhasil dihapus!");
-                                        loadJaringan();
+                                    if (!res.success){
+                                        alert("❌ Gagal menghapus dari database: " + (res.message || ""));
                                     } else {
-                                        alert("❌ " + (res.message || "Gagal menghapus tiang!"));
+                                        // hapus marker langsung tanpa reload seluruh layer
+                                        tiangLayer.removeLayer(marker);
+                                        console.log("✅ Tiang ID " + row.id_jaringan + " berhasil dihapus.");
                                     }
                                 })
                                 .catch(err => {
-                                    console.error(err);
-                                    alert("❌ Terjadi kesalahan saat menghapus tiang!");
+                                    console.error("❌ Error hapus:", err);
+                                    alert("⚠️ Terjadi kesalahan koneksi. Marker tetap tampil.");
                                 });
-                            }
-                        });
+                            });
+                        }
 
-                        var labelText = (row.kode_system || '-') + " - " + (row.transmisi || '-');
-                        marker.bindTooltip(labelText, {
-                            permanent: true, direction: 'top', offset: [0, -30], className: 'label-tiang'
-                        });
+                        // ====== Tambah marker ke layer sesuai kategori ======
+                        if (kategori === 'GARDU') garduLayer.addLayer(marker);
+                        else if (kategori === 'TIANG') tiangLayer.addLayer(marker);
+                        else if (kategori === 'PELANGGAN') pelangganLayer.addLayer(marker);
                     }
+                });
 
-                    if (kategori === 'GARDU') garduLayer.addLayer(marker);
-                    else if (kategori === 'TIANG') tiangLayer.addLayer(marker);
-                    else if (kategori === 'PELANGGAN') pelangganLayer.addLayer(marker);
+                // ====== Tambah Kabel ======
+                data.forEach(function(row){
+                    if ((row.kategori || '').toUpperCase() === 'KABEL' && row.parent_id && row.target_id){
+                        var parent = data.find(d => d.id_jaringan === row.parent_id);
+                        var target = data.find(d => d.id_jaringan === row.target_id);
+                        if (!parent || !target) return;
+
+                        var lat1 = parseFloat(parent.latitude);
+                        var lon1 = parseFloat(parent.longitude);
+                        var lat2 = parseFloat(target.latitude);
+                        var lon2 = parseFloat(target.longitude);
+                        if (!lat1 || !lon1 || !lat2 || !lon2) return;
+
+                        var tegangan = (row.transmisi || '').toUpperCase();
+                        var color = '#00bfff';
+                        var offset = 0;
+                        if (tegangan === 'TT') color = '#ff6600';
+                        else if (tegangan === 'TR') color = '#32cd32';
+                        else if ((row.status_lapangan || '').toUpperCase() === 'LAMA') color = '#808080';
+                        if(tegangan === 'TM') offset = 0.00005;
+                        else if(tegangan === 'TR') offset = -0.00005;
+
+                        var lineCoords = offsetLine(lat1, lon1, lat2, lon2, offset);
+                        var line = L.polyline(lineCoords, {color: color, weight: 3})
+                            .bindPopup(
+                                "<b>Kabel:</b> " + (row.kode_system || '-') +
+                                "<br><b>Dari:</b> " + (parent.kode_system || '-') +
+                                "<br><b>Ke:</b> " + (target.kode_system || '-') +
+                                "<br><b>Tegangan:</b> " + (row.transmisi || '-') +
+                                "<br><b>Spesifikasi:</b> " + (row.spesifikasi || '-') +
+                                "<br><b>Status Lapangan:</b> " + (row.status_lapangan || '-')
+                            );
+                        kabelLayer.addLayer(line);
+                    }
                 });
 
                 if(bounds.length>0) map.fitBounds(bounds, {padding:[40,40]});
@@ -217,6 +224,8 @@ document.addEventListener('DOMContentLoaded', function() {
     loadJaringan();
 
     // ====== Mode Tambah Tiang ======
+    var tambahTiangMode = false;
+    var newMarker = null;
     document.getElementById('btnTambahTiang').addEventListener('click', function(){
         tambahTiangMode = true;
         alert("📍 Klik di peta untuk menambahkan titik tiang baru");
@@ -264,7 +273,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(r => r.json())
                 .then(res => {
                     if(res.success){
-                        alert("✅ Tiang berhasil disimpan!");
+                        // Tutup popup marker sementara
+                        map.closePopup(e.popup);
+                        // Hapus marker sementara
+                        if(newMarker) map.removeLayer(newMarker);
+                        newMarker = null;
+                        // Reload semua jaringan
                         loadJaringan();
                     } else {
                         alert("❌ Gagal menyimpan tiang!");
@@ -278,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // ====== Ganti Layer Peta ======
+    // ====== Tombol toggle map ======
     document.getElementById('btnToggleMap').addEventListener('click', function(){
         if(currentBase === 'default'){
             map.removeLayer(defaultMap);
@@ -293,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // ====== Legenda ======
+    // ====== Legend ======
     var legend = L.control({ position: 'bottomleft' });
     legend.onAdd = function(){
         var div = L.DomUtil.create('div', 'legend');
@@ -308,7 +322,28 @@ document.addEventListener('DOMContentLoaded', function() {
         return div;
     };
     legend.addTo(map);
+
+    // kompas
+    // ====== Tambahkan Kompas Arah Utara ======
+    var compass = L.control({ position: 'topright' });
+    compass.onAdd = function(map) {
+        var div = L.DomUtil.create('div', 'leaflet-compass');
+        div.innerHTML = '🧭<br><span style="font-size:10px;">Utara</span>';
+        div.style.backgroundColor = 'white';
+        div.style.padding = '6px 8px';
+        div.style.borderRadius = '8px';
+        div.style.boxShadow = '0 0 6px rgba(0,0,0,0.3)';
+        div.style.textAlign = 'center';
+        div.style.fontSize = '16px';
+        div.style.lineHeight = '18px';
+        div.style.cursor = 'default';
+        return div;
+    };
+    compass.addTo(map);
+
+
 });
 </script>
+
 </body>
 </html>

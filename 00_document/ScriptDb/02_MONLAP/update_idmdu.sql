@@ -1,0 +1,5 @@
+select a.*, rowid
+from  LISDESBPBL.TRANS_JARINGAN_LISTRIK a
+where a.KATEGORI = 'KABEL'
+and TRANSMISI = 'TR'
+--and SPESIFIKASI = 'NFA2X-T,3X70 + 70MM2;0.6/1KV'

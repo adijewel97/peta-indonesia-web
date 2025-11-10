@@ -128,7 +128,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                     "<br><b>Transmisi:</b> " + (row.transmisi || '-') +
                                     "<br><b>Status Lapangan:</b> " + (row.status_lapangan || '-') +
                                     "<br><b>Latitude:</b> " + (row.latitude || '-') +
-                                    "<br><b>Longitude:</b> " + (row.longitude || '-');
+                                    "<br><b>Longitude:</b> " + (row.longitude || '-')+
+                                    "<br><b>Desa/Kelurahan:</b> " + (row.DESAKELURAHAN || '-');
 
                         var marker = L.marker([lat, lon], {icon: icon}).bindPopup(popup);
                         bounds.push([lat, lon]);
@@ -311,6 +312,8 @@ document.addEventListener('DOMContentLoaded', function() {
     legend.onAdd = function(){
         var div = L.DomUtil.create('div', 'legend');
         div.innerHTML = "<b>Keterangan:</b><br>" +
+                        "<img src='assets/icons/TrafoListrik_old64.png'> Gardu Lama<br>" +
+                        "<img src='assets/icons/TiangListrik_old64.png'> Tiang Lama<br>" +
                         "<img src='assets/icons/TrafoListrik_new64.png'> Gardu Baru<br>" +
                         "<img src='assets/icons/TiangListrik_new64.png'> Tiang Baru<br>" +
                         "<img src='assets/icons/PelangganListrik_new64.png'> Pelanggan Baru<br><hr>" +
@@ -321,6 +324,25 @@ document.addEventListener('DOMContentLoaded', function() {
         return div;
     };
     legend.addTo(map);
+
+    // kompas
+    // ====== Tambahkan Kompas Arah Utara ======
+    var compass = L.control({ position: 'topright' });
+    compass.onAdd = function(map) {
+        var div = L.DomUtil.create('div', 'leaflet-compass');
+        div.innerHTML = '🧭<br><span style="font-size:10px;">Utara</span>';
+        div.style.backgroundColor = 'white';
+        div.style.padding = '6px 8px';
+        div.style.borderRadius = '8px';
+        div.style.boxShadow = '0 0 6px rgba(0,0,0,0.3)';
+        div.style.textAlign = 'center';
+        div.style.fontSize = '16px';
+        div.style.lineHeight = '18px';
+        div.style.cursor = 'default';
+        return div;
+    };
+    compass.addTo(map);
+
 
 });
 </script>

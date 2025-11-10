@@ -5,6 +5,7 @@ CREATE TABLE master_material_distibusi_utama (
     kategori VARCHAR2(200),
     nama_sku VARCHAR2(400),
     spesifikasi VARCHAR2(400),
+    transmisi            varchar2(5 byte)         default 'TR',
     volume NUMBER,
     kdsatuan VARCHAR2(10),
     satuan VARCHAR2(50),
